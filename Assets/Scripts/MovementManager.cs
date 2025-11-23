@@ -40,6 +40,7 @@ public class MovementManager : MonoBehaviour
              Debug.LogError("Pastikan semua objek sudah di-assign di Inspector! Termasuk kedua Karakter dan Fade Panel.");
              return;
         }
+        audiomanager.instance.PlaySFX(audiomanager.instance.BangsaIsraelClip);
 
         nextButton.onClick.AddListener(OnNextButtonClicked);
         nextStageButton.onClick.AddListener(NextStageTransition);
@@ -128,6 +129,7 @@ public class MovementManager : MonoBehaviour
             FadeInCharacter();
 
             currentClickCount++;
+            audiomanager.instance.PlaySFX(audiomanager.instance.buttonpress2);
             
             if (currentClickCount >= 2) 
             {

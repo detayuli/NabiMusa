@@ -12,7 +12,7 @@ public class ObstacleSpawner : MonoBehaviour
     public float minSpawnDelay = 1.0f;  // Waktu tunggu minimal antar spawn
     public float maxSpawnDelay = 2.0f;  // Waktu tunggu maksimal antar spawn
     public float obstacleMoveSpeed = 5f; // Kecepatan bergerak ke kiri (Harus cocok dengan script movement obstacle!)
-    
+    public float yoffset = -1.5f;
     [Header("Lanes Setup")]
     public float laneHeight = 2.5f;     // Jarak antar jalur (Harus cocok dengan BasketRunnerManager)
 
@@ -59,7 +59,7 @@ public class ObstacleSpawner : MonoBehaviour
     {
         // 1. Pilih Jalur (Lane) acak: -1 (Bawah), 0 (Tengah), atau 1 (Atas)
         int randomLaneIndex = Random.Range(0, 3) - 1; // Menghasilkan -1, 0, atau 1
-        float spawnY = randomLaneIndex * laneHeight;
+        float spawnY = (randomLaneIndex * laneHeight) + yoffset;
         
         // 2. Pilih Prefab Obstacle acak
         if (obstaclePrefabs.Length == 0) return;

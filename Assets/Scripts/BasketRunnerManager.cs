@@ -1,96 +1,107 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Untuk Game Over/Restart
-using UnityEngine.UI; // <-- TAMBAHAN: Walaupun tidak wajib, baik untuk kejelasan UI
+using UnityEngine.SceneManagement; 
+using UnityEngine.UI; 
+using TMPro; 
 
 public class BasketRunnerManager : MonoBehaviour
 {
     // --- Pengaturan Keranjang ---
-    public float moveSpeed = 5f;        // Kecepatan gerakan vertikal
-    public float laneHeight = 2.5f;     // Jarak antar jalur (misal: 2.5 unit Unity)
+    public float moveSpeed = 5f;        
+    public float laneHeight = 1.5f;     // Diperbaiki: Nilai yang lebih kecil (1.5f) untuk jalur yang rapat
     
     // --- Pengaturan Lane (Jalur) ---
-    // Tambahkan Max dan Min Lane untuk mempermudah penambahan jalur
-    public int maxLane = 1;             // Indeks Jalur paling atas (misal: 1)
-    public int minLane = -1;            // Indeks Jalur paling bawah (misal: -1)
-
-    // Posisi Y saat ini (0 = tengah, 1 = atas, -1 = bawah)
+    public int maxLane = 1;             
+    public int minLane = -1;            
+    public float yOffset = -3.0f;       // <-- TAMBAHAN: Offset dasar untuk menggeser jalur ke bawah sungai
+                                        // Pastikan nilai ini SAMA dengan ObstacleSpawner
+    
     private int currentLane = 0; 
     private Vector3 targetPosition;
     
     // --- Pengaturan Game ---
-    public float totalTime = 30f;       // Waktu bertahan yang dibutuhkan (30 detik)
+    public float totalTime = 30f;       
     private float timeRemaining;
-    private bool isGameOver = false;
-    private bool isAnimating = false; // Flag tambahan untuk kontrol gerakan
+    private bool isGameOver = true;     // <-- UBAH: Set True di Start agar menunggu StartGame()
+    private bool isAnimating = false; 
 
     // --- Referensi UI/Lainnya ---
     public GameObject gameOverPanel;
-    public TMPro.TextMeshProUGUI timerText; 
+    public TextMeshProUGUI timerText; 
     public ObstacleSpawner obstacleSpawner; 
 
 
     void Start()
     {
-        // Posisi awal keranjang adalah di jalur tengah
-        targetPosition = transform.position;
-        timeRemaining = totalTime;
-        isGameOver = false;
+        // Posisi Z direset ke Z=0
+        targetPosition = new Vector3(transform.position.x, transform.position.y, 0f);
         
+        // PENTING: Panggil StartGame() di Start() untuk kasus Restart Scene
+        StartGame(); 
+        audiomanager.instance.PlaySFX(audiomanager.instance.Bayiditaruhclip);
+    }
+    
+    // FUNGSI INI DIPANGGIL OLEH TRANSITIONER / RESTART
+    public void StartGame()
+    {
+        // 1. Reset Status Game
+        timeRemaining = totalTime;
+        isGameOver = false; // <-- AKTIFKAN GAME DI SINI
+        isAnimating = false;
+        currentLane = 0; // Mulai di jalur tengah
+        
+        // 2. Set Posisi Fisik Keranjang ke Jalur Tengah Sungai
+        float gameStartY = currentLane * laneHeight + yOffset;
+        // Asumsi posisi X Keranjang adalah -8 (titik start gameplay)
+        transform.position = new Vector3(-4f, gameStartY, 0f); 
+        targetPosition = transform.position;
+
+        // 3. Reset UI
         if (gameOverPanel != null)
         {
+            // PENTING: Time.timeScale harus diset ke 1f saat restart/start
+            Time.timeScale = 1f; 
             gameOverPanel.SetActive(false);
         }
         
-        // Asumsi: ObstacleSpawner di Start() game-nya
+        // 4. Mulai Spawner
         if (obstacleSpawner != null)
         {
-            obstacleSpawner.StartSpawning();
+            obstacleSpawner.StartSpawning(); 
         }
+        
+        Debug.Log("Game Basket Diinisialisasi Ulang & Dimulai!");
     }
+
 
     void Update()
     {
         if (isGameOver) return;
         
-        // HandleInput(); // <-- HILANGKAN! Input sekarang ditangani oleh fungsi public MoveUp/MoveDown
         MoveBasket();
         UpdateTimer();
     }
     
-    // HILANGKAN FUNGSI HandleInput() yang lama
-
     private void MoveBasket()
     {
-        // Gerakkan keranjang ke posisi target (smoothed movement)
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
         
-        // Cek apakah sudah sampai di target, jika ya, matikan flag animasi
         if (transform.position == targetPosition)
         {
             isAnimating = false;
         }
     }
     
-    // ---------------------------------------------
-    // FUNGSI BARU: DIPANGGIL OLEH TOMBOL UI ATAS
-    // ---------------------------------------------
+    // FUNGSI INPUT: MoveUp/MoveDown
     public void MoveUp()
     {
-        // Cegah input jika game over atau sedang dalam proses animasi
         if (isGameOver || isAnimating) return; 
-
         int newLane = Mathf.Clamp(currentLane + 1, minLane, maxLane);
         SetTargetLane(newLane);
     }
 
-    // ---------------------------------------------
-    // FUNGSI BARU: DIPANGGIL OLEH TOMBOL UI BAWAH
-    // ---------------------------------------------
     public void MoveDown()
     {
-        // Cegah input jika game over atau sedang dalam proses animasi
         if (isGameOver || isAnimating) return;
-
         int newLane = Mathf.Clamp(currentLane - 1, minLane, maxLane);
         SetTargetLane(newLane);
     }
@@ -100,24 +111,33 @@ public class BasketRunnerManager : MonoBehaviour
         if (newLane != currentLane)
         {
             currentLane = newLane;
-            isAnimating = true; // Aktifkan flag saat gerakan dimulai
+            isAnimating = true; 
             
-            // Hitung posisi Y baru
-            float newY = currentLane * laneHeight;
+            // Hitung posisi Y baru berdasarkan laneHeight dan yOffset
+            float newY = (currentLane * laneHeight) + yOffset;
             targetPosition = new Vector3(transform.position.x, newY, transform.position.z);
         }
     }
     
-    // ... (Sisa fungsi UpdateTimer, OnCollisionEnter2D, GameOver, GameWin, RestartGame tetap sama) ...
-    
-    private void UpdateTimer()
+private void UpdateTimer()
     {
         timeRemaining -= Time.deltaTime;
+        
+        // --- PENTING: LOGIKA SFX 15 DETIK ---
+        // Pemicu: Jika waktu tersisa kurang dari atau sama dengan 15.0 detik, dan SFX belum dimainkan
+        if (timeRemaining <= 20f)
+        {
+            if (audiomanager.Instance)
+            {
+                audiomanager.instance.PlaySFX(audiomanager.instance.PutriFiraun);
+            }
+        }
+        // -------------------------------------
         
         // Perbarui UI
         if (timerText != null)
         {
-            timerText.text = "Waktu: " + Mathf.Max(0, timeRemaining).ToString("F1");
+            timerText.text = "Waktu: " + Mathf.Max(0, timeRemaining).ToString("F1"); 
         }
 
         if (timeRemaining <= 0)
@@ -136,8 +156,10 @@ public class BasketRunnerManager : MonoBehaviour
 
     private void GameOver()
     {
+        if (isGameOver) return; 
         isGameOver = true;
-        Time.timeScale = 0f; // Hentikan waktu permainan
+        Time.timeScale = 0f; // Hentikan waktu permainan saat Game Over
+        Debug.Log("GAME OVER!");
         
         if (obstacleSpawner != null)
         {
@@ -152,17 +174,22 @@ public class BasketRunnerManager : MonoBehaviour
     
     private void GameWin()
     {
+        if (isGameOver) return; 
         isGameOver = true;
+        Time.timeScale = 0f; 
+        Debug.Log("GAME WIN! Waktu bertahan tercapai.");
+        SceneManager.LoadScene("Gameplay 3");
         
         if (obstacleSpawner != null)
         {
             obstacleSpawner.StopSpawning(); 
         }
-        // ... (Lanjutkan ke Stage 4)
     }
     
+    // Tambahkan fungsi RestartGame di sini
     public void RestartGame()
     {
+        Time.timeScale = 1f; // PENTING: Setel kembali waktu sebelum memuat scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

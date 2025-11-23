@@ -16,7 +16,6 @@ public class Stage2Manager : MonoBehaviour
     
     // TIGA SPRITE DIALOG YANG DIGUNAKAN
     public Sprite commandSprite;      // -> Step 1: Tindas Israel
-    public Sprite killBabySprite;     // -> Step 2: Bunuh Bayi Laki-laki
     public Sprite crossBabySprite;    // -> Step 3: Tanda Silang/Larangan
     
     // --- Tombol Next Stage ---
@@ -37,6 +36,7 @@ public class Stage2Manager : MonoBehaviour
     void Start()
     {
         InitializeStage2(); 
+        audiomanager.instance.PlaySFX(audiomanager.instance.RajaMesirclip);
     }
 
     private void InitializeStage2() 
@@ -91,9 +91,10 @@ public class Stage2Manager : MonoBehaviour
         
         // 1. Naikkan step
         currentInteractionStep++;
+        audiomanager.instance.PlaySFX(audiomanager.instance.buttonpress3);
 
         // 2. Jika step melebihi 3, reset ke 1
-        if (currentInteractionStep > 3)
+        if (currentInteractionStep > 2)
         {
             currentInteractionStep = 1;
         }
@@ -124,14 +125,7 @@ public class Stage2Manager : MonoBehaviour
                 if(bubbleTextRenderer != null) bubbleTextRenderer.sprite = commandSprite;
                 Debug.Log("Dialog: Step 1 (Tindas Israel).");
                 break;
-
             case 2:
-                // Langkah 2: Bunuh Bayi Laki-laki
-                if(bubbleTextRenderer != null) bubbleTextRenderer.sprite = killBabySprite;
-                Debug.Log("Dialog: Step 2 (Bunuh Bayi).");
-                break;
-                
-            case 3:
                 // Langkah 3: Tanda Silang/Larangan
                 if(bubbleTextRenderer != null) bubbleTextRenderer.sprite = crossBabySprite; 
                 Debug.Log("Dialog: Step 3 (Silang/Larangan).");

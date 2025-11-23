@@ -53,6 +53,7 @@ public class MainMenuManager : MonoBehaviour
     void StartGame()
     {
         isTransitioning = true;
+        audiomanager.instance.PlaySFX(audiomanager.instance.buttonpress1); 
         
         
         // Fade out menu
@@ -68,6 +69,7 @@ public class MainMenuManager : MonoBehaviour
 
     void QuitGame()
     {
+        audiomanager.instance.PlaySFX(audiomanager.instance.buttonpress1);
         Application.Quit();
     }
 }
