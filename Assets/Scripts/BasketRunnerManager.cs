@@ -137,6 +137,7 @@ public class BasketRunnerManager : MonoBehaviour
     private void GameOver()
     {
         isGameOver = true;
+        Time.timeScale = 0f; // Hentikan waktu permainan
         
         if (obstacleSpawner != null)
         {

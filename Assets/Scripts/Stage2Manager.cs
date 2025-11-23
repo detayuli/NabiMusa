@@ -13,8 +13,11 @@ public class Stage2Manager : MonoBehaviour
     // --- Bubble Text (Sprite Renderer) ---
     public GameObject bubbleTextContainer; 
     public SpriteRenderer bubbleTextRenderer; 
-    public Sprite commandSprite; 
-    public Sprite killBabySprite;  
+    
+    // TIGA SPRITE DIALOG YANG DIGUNAKAN
+    public Sprite commandSprite;      // -> Step 1: Tindas Israel
+    public Sprite killBabySprite;     // -> Step 2: Bunuh Bayi Laki-laki
+    public Sprite crossBabySprite;    // -> Step 3: Tanda Silang/Larangan
     
     // --- Tombol Next Stage ---
     public Button nextStageButton2;       
@@ -28,10 +31,9 @@ public class Stage2Manager : MonoBehaviour
     
     // --- Variabel Kontrol ---
     private int currentInteractionStep = 0;
-    private bool interactionCompleted = false; // FLAG PENTING
+    private bool interactionCompleted = false; // Flag ini kini hanya menandai kapan dialog PERTAMA kali selesai
     private bool isAnimating = false; 
 
-    // Menggunakan Start() untuk inisialisasi, karena kini skrip ada di GameManager
     void Start()
     {
         InitializeStage2(); 
@@ -39,18 +41,21 @@ public class Stage2Manager : MonoBehaviour
 
     private void InitializeStage2() 
     {
-        bubbleTextContainer.SetActive(false);
-        nextStageButton2.gameObject.SetActive(false);
+        // Pastikan kontainer dialog disembunyikan di awal
+        if(bubbleTextContainer != null) bubbleTextContainer.SetActive(false);
+        
+        // --- PERUBAHAN: Tombol Next Stage diaktifkan permanen setelah fade in ---
+        if(nextStageButton2 != null) nextStageButton2.gameObject.SetActive(false); 
         
         currentInteractionStep = 0;
         isAnimating = false;
-        // JANGAN reset interactionCompleted di sini, biarkan nilainya bertahan antar-Scene jika Anda tidak memuat ulang. 
-        // Namun, jika setiap kali Scene dimulai, interaksi harus diulang, maka tetap FALSE.
         interactionCompleted = false; 
         
-        nextStageButton2.onClick.RemoveAllListeners();
-        // Listener Next Stage tetap harus diatur di Inspector atau di sini jika tidak mau pakai Inspector.
-        // nextStageButton2.onClick.AddListener(GoToStage3); 
+        if (nextStageButton2 != null)
+        {
+            nextStageButton2.onClick.RemoveAllListeners();
+            nextStageButton2.onClick.AddListener(GoToStage3); 
+        }
 
         DoScene2FadeIn(); 
 
@@ -67,6 +72,9 @@ public class Stage2Manager : MonoBehaviour
             globalFadePanel2.DOFade(0f, 1f).OnComplete(() =>
             {
                 globalFadePanel2.raycastTarget = false;
+                
+                // PERUBAHAN: Aktifkan tombol Next Stage segera setelah fade in
+                if(nextStageButton2 != null) nextStageButton2.gameObject.SetActive(true); 
             });
         }
     }
@@ -79,31 +87,24 @@ public class Stage2Manager : MonoBehaviour
             return;
         }
 
-        if (interactionCompleted)
-        {
-             // Interaksi selesai: Ulangi teks mulai dari step 1
-             // Kita kirim flag TRUE untuk menandakan ini adalah "reset" (ulang)
-             StartCoroutine(InteractionSequence(true)); 
-        }
-        else
-        {
-             // Interaksi urutan normal
-             currentInteractionStep++;
-             // Kita kirim flag FALSE untuk menandakan ini adalah "run pertama"
-             StartCoroutine(InteractionSequence(false));
-        }
-    }
-
-    private IEnumerator InteractionSequence(bool resetInteraction)
-    {
-        isAnimating = true; 
+        // --- LOGIKA LOOPING BARU ---
         
-        if (resetInteraction)
+        // 1. Naikkan step
+        currentInteractionStep++;
+
+        // 2. Jika step melebihi 3, reset ke 1
+        if (currentInteractionStep > 3)
         {
-            // Jika ini pengulangan, set kembali ke langkah pertama dialog
             currentInteractionStep = 1;
         }
 
+        StartCoroutine(InteractionSequence());
+    }
+
+    private IEnumerator InteractionSequence()
+    {
+        isAnimating = true; 
+        
         // Efek visual klik
         if (pharaohImage != null)
         {
@@ -112,54 +113,57 @@ public class Stage2Manager : MonoBehaviour
         
         yield return new WaitForSeconds(pharaohCommandDuration);
 
+        // Tombol Next Stage TIDAK diubah statusnya di sini
+        
+        if(bubbleTextContainer != null) bubbleTextContainer.SetActive(true);
+
         switch (currentInteractionStep)
         {
             case 1:
-                bubbleTextContainer.SetActive(true);
-                bubbleTextRenderer.sprite = commandSprite;
-                
-                // FIX: Hanya sembunyikan tombol jika ini adalah run pertama
-                if (!resetInteraction) 
-                {
-                    nextStageButton2.gameObject.SetActive(false); 
-                }
+                // Langkah 1: Tindas Israel
+                if(bubbleTextRenderer != null) bubbleTextRenderer.sprite = commandSprite;
+                Debug.Log("Dialog: Step 1 (Tindas Israel).");
                 break;
 
             case 2:
-                bubbleTextRenderer.sprite = killBabySprite;
-                
-                // FIX: Hanya sembunyikan tombol jika ini adalah run pertama
-                if (!resetInteraction) 
-                {
-                    nextStageButton2.gameObject.SetActive(false); 
-                }
+                // Langkah 2: Bunuh Bayi Laki-laki
+                if(bubbleTextRenderer != null) bubbleTextRenderer.sprite = killBabySprite;
+                Debug.Log("Dialog: Step 2 (Bunuh Bayi).");
                 break;
-
+                
             case 3:
-                // Interaksi Selesai
-                bubbleTextContainer.SetActive(false); 
-                
-                // Tampilkan Tombol Next Stage (atau pastikan tetap muncul)
-                nextStageButton2.gameObject.SetActive(true);
+                // Langkah 3: Tanda Silang/Larangan
+                if(bubbleTextRenderer != null) bubbleTextRenderer.sprite = crossBabySprite; 
+                Debug.Log("Dialog: Step 3 (Silang/Larangan).");
+                // Flag interaksi selesai hanya untuk menandai setidaknya satu loop penuh
                 interactionCompleted = true; 
-                
-                isAnimating = false;
-                yield break; 
+                break;
             
             default:
-                bubbleTextContainer.SetActive(false);
-                currentInteractionStep = 0; 
-                isAnimating = false;
+                // Ini seharusnya tidak pernah tercapai karena logika reset di OnPharaohClicked
+                if(bubbleTextContainer != null) bubbleTextContainer.SetActive(false);
                 break;
         }
         
         isAnimating = false;
     }
+
+    // Fungsi ini tidak diperlukan lagi karena Raja Firaun boleh diklik terus
+    /*
+    private void DisablePharaohButton()
+    {
+        if (pharaohButton != null)
+        {
+            pharaohButton.interactable = false;
+        }
+    }
+    */
     
     // Dipanggil dari Inspector Button Next Stage
     public void GoToStage3() 
     {
-        nextStageButton2.gameObject.SetActive(false); 
+        // Menyembunyikan tombol saat diklik, lalu melakukan fade dan pindah scene
+        if(nextStageButton2 != null) nextStageButton2.gameObject.SetActive(false); 
         
         if (globalFadePanel2 != null)
         {

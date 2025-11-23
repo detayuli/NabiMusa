@@ -1,21 +1,21 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening; 
-using UnityEngine.SceneManagement; // <-- TAMBAHAN: Diperlukan untuk pindah Scene
+using UnityEngine.SceneManagement; 
 
 public class MovementManager : MonoBehaviour
 {
-    // Variabel baru untuk Camera Manager
-    // public CameraStageManager cameraManager; // <-- DIHAPUS karena tidak digunakan lagi untuk transisi ini
-    // Jarak pergeseran kamera. Jika 0, script akan mencoba menghitung lebar layar.
-    // public float cameraPanDistance = 0f; // <-- DIHAPUS
+    // --- Nama Scene Stage 2 ---
+    public string nextSceneName = "Gameplay 1"; 
 
-    // --- BARU: Nama Scene Stage 2 ---
-    public string nextSceneName = "Gameplay 1"; // <-- Ganti nama Scene Anda!
-
-    // --- Pengaturan Karakter ---
+    // --- Pengaturan Karakter 1 ---
     public GameObject israeliCharacter; 
     public SpriteRenderer characterSpriteRenderer; 
+    
+    // --- BARU: Pengaturan Karakter 2 ---
+    public GameObject secondCharacter; 
+    public SpriteRenderer secondCharacterSpriteRenderer; 
+    
     public float characterMoveDistance = 2.0f; 
     public float characterMoveDuration = 0.5f; 
     public float characterFadeDuration = 0.3f; 
@@ -33,12 +33,11 @@ public class MovementManager : MonoBehaviour
     
     void Start()
     {
-        // ... (Logika pemeriksaan dan setup awal tetap sama) ...
-        
-        // --- MODIFIKASI: Hapus pengecekan cameraManager ---
-        if (israeliCharacter == null || characterSpriteRenderer == null || nextButton == null || nextButtonRect == null)
+        // Pengecekan semua objek yang diperlukan
+        if (israeliCharacter == null || characterSpriteRenderer == null || nextButton == null || nextButtonRect == null ||
+            secondCharacter == null || secondCharacterSpriteRenderer == null || globalFadePanel == null) 
         {
-             Debug.LogError("Pastikan semua objek sudah di-assign di Inspector!");
+             Debug.LogError("Pastikan semua objek sudah di-assign di Inspector! Termasuk kedua Karakter dan Fade Panel.");
              return;
         }
 
@@ -46,45 +45,22 @@ public class MovementManager : MonoBehaviour
         nextStageButton.onClick.AddListener(NextStageTransition);
         nextStageButton.gameObject.SetActive(false); 
 
-        Color charColor = characterSpriteRenderer.color;
-        charColor.a = 0f;
-        characterSpriteRenderer.color = charColor;
+        // Inisialisasi Karakter 1 (alpha 0)
+        Color charColor1 = characterSpriteRenderer.color;
+        charColor1.a = 0f;
+        characterSpriteRenderer.color = charColor1;
+        
+        // BARU: Inisialisasi Karakter 2 (alpha 0)
+        Color charColor2 = secondCharacterSpriteRenderer.color;
+        charColor2.a = 0f;
+        secondCharacterSpriteRenderer.color = charColor2;
 
         DoGlobalFadeIn();
         FadeInCharacter();
     }
-    
-    // ... (Fungsi DoGlobalFadeIn, OnNextButtonClicked, MoveCharacterAndButton, FadeInCharacter tetap sama) ...
 
-    /// <summary>
-    /// Fungsi yang dipanggil saat tombol Next Stage diklik. Sekarang memuat Scene baru.
-    /// </summary>
-    public void NextStageTransition()
-    {
-        nextStageButton.gameObject.SetActive(false); 
+    // --- Fungsi Fade Global ---
 
-        // Lakukan Fade Out Global sebelum pindah Scene
-        DoGlobalFadeOutAndLoadScene();
-    }
-
-    /// <summary>
-    /// Fungsi baru: Lakukan Fade Out (menjadi hitam penuh) dan muat Scene baru.
-    /// </summary>
-    private void DoGlobalFadeOutAndLoadScene()
-    {
-        // Matikan input saat fade
-        globalFadePanel.raycastTarget = true; 
-        
-        // Lakukan Fade Out (menjadi hitam penuh)
-        globalFadePanel.DOFade(1f, 1f) // Durasi fade 1 detik
-            .OnComplete(() =>
-            {
-                // Setelah layar hitam penuh, pindah ke Scene berikutnya
-                SceneManager.LoadScene(nextSceneName);
-            });
-    }
-
-    
     private void DoGlobalFadeIn()
     {
         globalFadePanel.color = new Color(globalFadePanel.color.r, globalFadePanel.color.g, globalFadePanel.color.b, 1f);
@@ -95,12 +71,38 @@ public class MovementManager : MonoBehaviour
             globalFadePanel.raycastTarget = false;
         });
     }
+
+    /// <summary>
+    /// Fungsi yang dipanggil saat tombol Next Stage diklik. Memuat Scene baru.
+    /// </summary>
+    public void NextStageTransition()
+    {
+        nextStageButton.gameObject.SetActive(false); 
+        DoGlobalFadeOutAndLoadScene();
+    }
+
+    private void DoGlobalFadeOutAndLoadScene()
+    {
+        globalFadePanel.raycastTarget = true; 
+        
+        // Lakukan Fade Out (menjadi hitam penuh) dan muat Scene
+        globalFadePanel.DOFade(1f, 1f)
+            .OnComplete(() =>
+            {
+                SceneManager.LoadScene(nextSceneName);
+            });
+    }
+
+    // --- Fungsi Movement dan Fade Karakter ---
     
     public void OnNextButtonClicked()
     {
         nextButton.interactable = false; 
 
-        characterSpriteRenderer.DOFade(0f, characterFadeDuration)
+        // Fade Out Karakter 1 dan 2 secara bersamaan
+        DOTween.Sequence()
+            .Join(characterSpriteRenderer.DOFade(0f, characterFadeDuration))
+            .Join(secondCharacterSpriteRenderer.DOFade(0f, characterFadeDuration))
             .OnComplete(() =>
             {
                 MoveCharacterAndButton();
@@ -109,31 +111,41 @@ public class MovementManager : MonoBehaviour
 
     private void MoveCharacterAndButton()
     {
-        // Pindahkan Karakter ke KIRI
-        israeliCharacter.transform.DOLocalMoveX(israeliCharacter.transform.localPosition.x - characterMoveDistance, characterMoveDuration);
+        Sequence moveSequence = DOTween.Sequence();
         
-        // Pindahkan Tombol Next ke KIRI (Menggunakan DOAnchorPosX pada RectTransform)
-        nextButtonRect.DOAnchorPosX(nextButtonRect.anchoredPosition.x - buttonMoveDistance, buttonMoveDuration)
-            .OnComplete(() =>
-            {
-                FadeInCharacter();
+        // Pindahkan Karakter 1 ke KIRI
+        moveSequence.Join(israeliCharacter.transform.DOLocalMoveX(israeliCharacter.transform.localPosition.x - characterMoveDistance, characterMoveDuration));
+        
+        // BARU: Pindahkan Karakter 2 ke KIRI
+        moveSequence.Join(secondCharacter.transform.DOLocalMoveX(secondCharacter.transform.localPosition.x + characterMoveDistance, characterMoveDuration));
+        
+        // Pindahkan Tombol Next ke KIRI
+        moveSequence.Join(nextButtonRect.DOAnchorPosX(nextButtonRect.anchoredPosition.x - buttonMoveDistance, buttonMoveDuration));
+        
+        // Aksi setelah movement selesai
+        moveSequence.OnComplete(() =>
+        {
+            FadeInCharacter();
 
-                currentClickCount++;
-                
-                if (currentClickCount >= 2) 
-                {
-                    nextButton.gameObject.SetActive(false); 
-                    nextStageButton.gameObject.SetActive(true); 
-                }
-                else
-                {
-                    nextButton.interactable = true; 
-                }
-            });
+            currentClickCount++;
+            
+            if (currentClickCount >= 2) 
+            {
+                nextButton.gameObject.SetActive(false); 
+                nextStageButton.gameObject.SetActive(true); 
+            }
+            else
+            {
+                nextButton.interactable = true; 
+            }
+        });
     }
 
     private void FadeInCharacter()
     {
-        characterSpriteRenderer.DOFade(1f, characterFadeDuration);
+        // Fade In Karakter 1 dan 2 secara bersamaan
+        DOTween.Sequence()
+            .Join(characterSpriteRenderer.DOFade(1f, characterFadeDuration))
+            .Join(secondCharacterSpriteRenderer.DOFade(1f, characterFadeDuration));
     }
 }
