@@ -122,16 +122,6 @@ public class BasketRunnerManager : MonoBehaviour
 private void UpdateTimer()
     {
         timeRemaining -= Time.deltaTime;
-        
-        // --- PENTING: LOGIKA SFX 15 DETIK ---
-        // Pemicu: Jika waktu tersisa kurang dari atau sama dengan 15.0 detik, dan SFX belum dimainkan
-        if (timeRemaining <= 20f)
-        {
-            if (audiomanager.Instance)
-            {
-                audiomanager.instance.PlaySFX(audiomanager.instance.PutriFiraun);
-            }
-        }
         // -------------------------------------
         
         // Perbarui UI
@@ -158,7 +148,16 @@ private void UpdateTimer()
     {
         if (isGameOver) return; 
         isGameOver = true;
-        Time.timeScale = 0f; // Hentikan waktu permainan saat Game Over
+        
+        // --- TAMBAHAN PENTING: HENTIKAN SEMUA SUARA ---
+        if (audiomanager.instance != null)
+        {
+            // Asumsi AudioManager punya fungsi StopAllAudio() atau sejenisnya
+            audiomanager.instance.StopAllSound(); 
+        }
+        // ---------------------------------------------
+        
+        Time.timeScale = 0f; // Hentikan waktu permainan (setelah audio dihentikan)
         Debug.Log("GAME OVER!");
         
         if (obstacleSpawner != null)

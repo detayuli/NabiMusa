@@ -1446,8 +1446,7 @@ MonoBehaviour:
   buttonpressClip: {fileID: 8300000, guid: ce1b61be581f07e4987b0f23a0a0521d, type: 3}
   BangsaIsraelClip: {fileID: 8300000, guid: 8fb389a34dd4fdd4f8b84e05a4f598a0, type: 3}
   RajaMesirclip: {fileID: 8300000, guid: 355f4643f16666d4b9799b5e86635c67, type: 3}
-  Bayiditaruhclip: {fileID: 8300000, guid: db50f6fc467e36d49b6168074b2cce03, type: 3}
-  PutriFiraun: {fileID: 8300000, guid: bb8888a46cf4fa94a8f3de89576737d5, type: 3}
+  Bayiditaruhclip: {fileID: 8300000, guid: 4dea9f10039a07141900266f85e95d50, type: 3}
   dinamaiMusa: {fileID: 8300000, guid: a8342acbb85bc4a44afbb16964423257, type: 3}
   buttonpress1: {fileID: 8300000, guid: 4490a74d4b112f24f82d7cbbda032f87, type: 3}
   buttonpress2: {fileID: 8300000, guid: 1a531b93ddf4baf40a1551fca9baa3e5, type: 3}

@@ -771,7 +771,7 @@ MonoBehaviour:
   maxLane: 1
   minLane: -1
   yOffset: -2
-  totalTime: 30
+  totalTime: 35
   gameOverPanel: {fileID: 889444732}
   timerText: {fileID: 1656730856}
   obstacleSpawner: {fileID: 2020471444}

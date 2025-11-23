@@ -20,7 +20,6 @@ public class audiomanager : MonoBehaviour
     public AudioClip BangsaIsraelClip;
     public AudioClip RajaMesirclip;
     public AudioClip Bayiditaruhclip;
-    public AudioClip PutriFiraun;
     public AudioClip dinamaiMusa;
 
     public AudioClip buttonpress1; // Pastikan variabel ini dideklarasikan
@@ -130,5 +129,23 @@ public class audiomanager : MonoBehaviour
     private void OnDestroy()
     {
         SceneManager.activeSceneChanged -= OnSceneChanged;
+    }
+
+        // Contoh sederhana di dalam class audiomanager
+    public void StopAllSound()
+    {
+        // Hentikan SFX Source
+        if (SFXSource != null)
+        {
+            SFXSource.Stop();
+        }
+        
+        // Hentikan Music Source
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+        
+        // Hentikan SFX/Music Source lainnya yang Anda gunakan...
     }
 }
